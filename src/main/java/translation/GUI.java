@@ -11,17 +11,23 @@ import java.awt.event.*;
 //            the GUI.
 public class GUI {
 
+    private static Translator translator = new JSONTranslator();
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JPanel countryPanel = new JPanel();
-            JTextField countryField = new JTextField(10);
-            countryField.setText("can");
-            countryField.setEditable(false); // we only support the "can" country code for now
+            JList<String> countryField = new JList<>(translator.getCountryCodes().toArray(new String[0]));
+            countryField.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            countryField.setVisibleRowCount(-1);
+            JScrollPane scrollPane = new JScrollPane(countryField);
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+            scrollPane.setPreferredSize(new java.awt.Dimension(20,100));
+
             countryPanel.add(new JLabel("Country:"));
             countryPanel.add(countryField);
 
             JPanel languagePanel = new JPanel();
-            JTextField languageField = new JTextField(10);
+            JComboBox<String> languageField = new JComboBox<>(translator.getLanguageCodes().toArray(new String[0]));
             languagePanel.add(new JLabel("Language:"));
             languagePanel.add(languageField);
 
@@ -39,12 +45,12 @@ public class GUI {
             submit.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    String language = languageField.getText();
-                    String country = countryField.getText();
+                    String language = languageField.getSelectedItem().toString().toLowerCase();
+                    String country = countryField.getSelectedValue().toString().toLowerCase();
 
                     // for now, just using our simple translator, but
                     // we'll need to use the real JSON version later.
-                    Translator translator = new CanadaTranslator();
+                    Translator translator = new JSONTranslator();
 
                     String result = translator.translate(country, language);
                     if (result == null) {
