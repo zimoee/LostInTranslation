@@ -5,19 +5,21 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class GUI {
-
+    public static LanguageCodeConverter languageCodeConverter = new LanguageCodeConverter();
+    public static CountryCodeConverter countryCodeConverter = new CountryCodeConverter();
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             // Load translator
             JSONTranslator translator = new JSONTranslator();
 
-
-
             // -------------------- Country Scrollable List --------------------
             JPanel countryPanel = new JPanel();
             DefaultListModel<String> countryModel = new DefaultListModel<>();
+            java.util.HashMap<String, String> countryNameToCode = new java.util.HashMap<>();
             for (String countryCode : translator.getCountryCodes()) {
-                countryModel.addElement(countryCode);
+                String country = countryCodeConverter.fromCountryCode(countryCode);
+                countryModel.addElement(country);
+                countryNameToCode.put(country, countryCode);
             }
 
             JList<String> countryList = new JList<>(countryModel);
@@ -32,9 +34,14 @@ public class GUI {
 
             // -------------------- Language Dropdown --------------------
             JPanel languagePanel = new JPanel();
-            JComboBox<String> languageDropdown = new JComboBox<>(
-                    translator.getLanguageCodes().toArray(new String[0])
-            );
+            DefaultComboBoxModel<String> languageModel = new DefaultComboBoxModel<>();
+            java.util.HashMap<String, String> languageNameToCode = new java.util.HashMap<>();
+            for (String languageCode : translator.getLanguageCodes()) {
+                String language = languageCodeConverter.fromLanguageCode(languageCode);
+                languageModel.addElement(language);
+                languageNameToCode.put(language, languageCode);
+            }
+            JComboBox<String> languageDropdown = new JComboBox<>(languageModel);
             languagePanel.add(new JLabel("Language:"));
             languagePanel.add(languageDropdown);
 
@@ -46,10 +53,12 @@ public class GUI {
 
             // -------------------- Update translation when selection changes --------------------
             Runnable updateTranslation = () -> {
-                String selectedCountry = countryList.getSelectedValue();
-                String selectedLanguage = (String) languageDropdown.getSelectedItem();
-                if (selectedCountry != null && selectedLanguage != null) {
-                    String translation = translator.translate(selectedCountry, selectedLanguage);
+                String selectedCountryName = countryList.getSelectedValue();
+                String selectedLanguageName = (String) languageDropdown.getSelectedItem();
+                if (selectedCountryName != null && selectedLanguageName != null) {
+                    String countryCode = countryNameToCode.get(selectedCountryName);
+                    String languageCode = languageNameToCode.get(selectedLanguageName);
+                    String translation = translator.translate(countryCode, languageCode);
                     if (translation == null) {
                         translation = "No translation found!";
                     }
@@ -64,10 +73,9 @@ public class GUI {
             // -------------------- Main Panel --------------------
             JPanel mainPanel = new JPanel();
             mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-            mainPanel.add(countryPanel);
             mainPanel.add(languagePanel);
-
             mainPanel.add(resultPanel);
+            mainPanel.add(countryPanel);
 
             JFrame frame = new JFrame("Country Name Translator");
             frame.setContentPane(mainPanel);
